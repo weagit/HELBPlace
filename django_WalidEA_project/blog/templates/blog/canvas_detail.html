@@ -1,0 +1,152 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- Titre et informations du canvas -->
+    <h1>{{ canvas.title }}</h1>
+    <p>Dimensions: {{ canvas.width }}x{{ canvas.height }} pixels</p>
+    <p>Created by: {{ canvas.author.username }}</p>
+    <p>Was Created: {{ canvas.date_posted }}</p>
+
+    <!-- Section pour dessiner -->
+    <div class="canvas-container">
+        <h3>Draw on the Canvas</h3>
+        <!-- Le canvas où les pixels sont affichés -->
+        <canvas id="canvas" width="{{ canvas.width }}" height="{{ canvas.height }}" 
+                style="border:1px solid black;"></canvas>
+
+        <!-- Sélecteur de couleurs -->
+        <div class="color-picker">
+            <h4>Select a color:</h4>
+            <input type="color" id="colorPicker" value="#000000">  <!-- Couleur par défaut : noir -->
+        </div>
+    </div>
+
+    <!-- Affichage du bouton de suppression si l'utilisateur est le créateur -->
+    {% if can_delete %}
+    <div class="delete-button">
+        <!-- Formulaire pour la suppression de la toile -->
+        <form method="POST" action="{% url 'canvas-delete' pk=canvas.pk %}" id="delete-form">
+            {% csrf_token %}
+            <button type="button" class="btn btn-danger" id="delete-button">Delete Canvas</button>  <!-- Bouton de suppression -->
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+
+    // 1. Initialisation du canvas et du contexte 2D
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    
+    // 2. Charger les données des pixels depuis le backend (les données sont passées sous forme JSON)
+    const pixelData = JSON.parse('{{ content_json|safe }}'); // Contenu JSON des pixels
+    const colorPicker = document.getElementById("colorPicker");
+    let selectedColor = colorPicker.value; // Couleur sélectionnée par défaut
+
+    // 3. Définir le facteur d'agrandissement pour rendre les pixels visibles
+    const scale = 10; // Chaque pixel logique sera dessiné comme un carré de 10x10 pixels
+
+    // 4. Ajuster la taille réelle du canvas pour correspondre à l'échelle
+    canvas.width = pixelData[0].length * scale; // Largeur logique * échelle
+    canvas.height = pixelData.length * scale;  // Hauteur logique * échelle
+
+    // 5. Fonction pour dessiner les pixels sur le canvas
+    function renderCanvas(pixels) {
+        // Boucle à travers les pixels et les affiche à l'échelle
+        for (let y = 0; y < pixels.length; y++) {
+            for (let x = 0; x < pixels[y].length; x++) {
+                ctx.fillStyle = pixels[y][x] || "#FFFFFF"; // Couleur par défaut : blanc
+                ctx.fillRect(x * scale, y * scale, scale, scale); // Dessiner chaque pixel comme un carré agrandi
+            }
+        }
+    }
+
+    // 6. Afficher les pixels initiaux sur le canvas
+    renderCanvas(pixelData);
+
+    // 7. Mettre à jour la couleur sélectionnée par l'utilisateur
+    colorPicker.addEventListener("input", (event) => {
+        selectedColor = event.target.value;  // Mette à jour la couleur choisie dans le sélecteur
+    });
+
+    // 8. Gérer les clics sur le canvas pour dessiner des pixels
+    canvas.addEventListener("click", (event) => {
+        // Calculer les coordonnées du clic en pixels logiques
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.floor((event.clientX - rect.left) / scale); // Coordonnée X logique
+        const y = Math.floor((event.clientY - rect.top) / scale); // Coordonnée Y logique
+
+        // Avant d'envoyer la requête de mise à jour, vérifier si l'intervalle est respecté
+        fetch("{% url 'update-pixel' canvas.id %}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ x, y, color: selectedColor }) // Envoi des données du pixel modifié
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();  // Si la requête a réussi, continuer avec la mise à jour
+            } else if (response.status === 403) {
+                // Si l'intervalle n'est pas respecté, afficher le message d'attente
+                return response.json().then(data => {
+                    alert(data.error);  // Afficher le message indiquant qu'il faut attendre
+                });
+            } else {
+                alert("Failed to update pixel!"); // Afficher une alerte en cas d'erreur serveur
+            }
+        })
+        .then(data => {
+            if (data && data.message) {
+                console.log(data.message);  // Confirmation si réussi
+            }
+        });
+
+        // Mettre à jour les données des pixels localement (seulement si l'édition a été autorisée)
+        if (data && data.message) {
+            pixelData[y][x] = selectedColor;  // Mettre à jour localement les données des pixels
+            // Dessiner immédiatement le pixel modifié sur le canvas
+            ctx.fillStyle = selectedColor;
+            ctx.fillRect(x * scale, y * scale, scale, scale);
+        }
+    });
+
+    // 9. Polling pour mettre à jour les pixels dynamiquement
+    function pollForUpdates() {
+        // Effectuer une requête AJAX pour récupérer les données mises à jour
+        fetch("{% url 'get-canvas-data' canvas.id %}")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to fetch canvas updates!");
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Réafficher les pixels si des changements sont détectés
+                const updatedPixelData = JSON.parse(data.content);
+                renderCanvas(updatedPixelData); // Mettre à jour le canvas avec les nouveaux pixels
+            })
+            .catch(error => {
+                console.error("Error during polling:", error);  // Log de l'erreur en cas de problème
+            })
+            .finally(() => {
+                // Répéter le polling toutes les x secondes
+                setTimeout(pollForUpdates, 500);
+            });
+    }
+
+    // Lancer le polling
+    pollForUpdates();
+
+    // Ajouter une confirmation avant la suppression du canvas
+    document.getElementById('delete-button').addEventListener('click', function(event) {
+        if (confirm('Are you sure you want to delete this canvas? This action cannot be undone.')) {
+            // Si l'utilisateur confirme, soumettre le formulaire
+            document.getElementById('delete-form').submit();
+        } else {
+            // Si l'utilisateur annule, ne rien faire
+            event.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

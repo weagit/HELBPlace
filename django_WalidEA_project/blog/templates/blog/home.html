@@ -1,0 +1,93 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Available Canvases</h1>
+    {% for canvas in canvases %}
+        <div class="canvas-item">
+            <!-- Affiche l'image du créateur de la toile -->
+            <img class="rounded-circle article-img" src="{{ canvas.author.profile.image.url }}">
+            
+            <!-- Affiche le titre de la toile, avec un lien vers les détails -->
+            <h2><a href="{% url 'canvas-detail' pk=canvas.pk %}">{{ canvas.title }}</a></h2>
+
+            <!-- Affiche les dimensions du canvas -->
+            <p>Dimensions: {{ canvas.width }}x{{ canvas.height }} pixels</p>
+            
+            <!-- Affiche le nom du créateur -->
+            <p>Created by: {{ canvas.author.username }}</p>
+
+            <!-- Affiche l'intervalle de modification des pixels -->
+            <p>Modification interval: {{ canvas.pixel_edit_interval }} seconds</p> <!-- Affiche l'intervalle -->
+
+            <!-- Lien vers les statistiques de la toile -->
+            <a href="{% url 'canvas-statistics' pk=canvas.pk %}" class="btn btn-info">See statistics</a>
+
+            <!-- Canvas pour afficher les pixels -->
+            <canvas id="canvas-{{ canvas.id }}" width="{{ canvas.width }}" height="{{ canvas.height }}" style="border:1px solid black;"></canvas>
+            
+            <script>
+                (function() {
+                    const canvas = document.getElementById("canvas-{{ canvas.id }}");
+                    const ctx = canvas.getContext("2d");
+                    const scale = 5; // Facteur d'agrandissement pour afficher correctement les pixels
+
+                    // Charger les données des pixels depuis le backend
+                    let pixelData = JSON.parse('{{ canvas.content|escapejs }}'); // Récupération des données de pixels
+
+                    // Ajuster les dimensions visuelles du canvas pour qu'il soit plus grand
+                    canvas.style.width = `${canvas.width * scale}px`;
+                    canvas.style.height = `${canvas.height * scale}px`;
+
+                    // Mettre à jour la taille du contexte pour correspondre à l'échelle choisie
+                    canvas.width = canvas.width * scale;
+                    canvas.height = canvas.height * scale;
+
+                    // Fonction pour afficher les pixels comme des carrés nets sur le canvas
+                    function renderCanvas(pixels) {
+                        for (let y = 0; y < pixels.length; y++) {
+                            for (let x = 0; x < pixels[y].length; x++) {
+                                ctx.fillStyle = pixels[y][x] || "#FFFFFF"; // Utilise la couleur définie ou du blanc par défaut
+                                ctx.fillRect(x * scale, y * scale, scale, scale); // Dessiner un carré agrandi
+                            }
+                        }
+                    }
+
+                    // Initialiser le canvas avec les pixels actuels
+                    renderCanvas(pixelData);
+
+                    // Fonction pour mettre à jour dynamiquement les pixels via AJAX
+                    function pollForUpdates() {
+                        fetch("{% url 'get-canvas-data' canvas.id %}")
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error("Failed to fetch canvas updates!"); // En cas d'erreur, afficher un message
+                                }
+                                return response.json(); // Récupérer les nouvelles données
+                            })
+                            .then(data => {
+                                const updatedPixelData = JSON.parse(data.content); // Mettre à jour les pixels
+                                // Vérifier si les données ont changé
+                                if (JSON.stringify(updatedPixelData) !== JSON.stringify(pixelData)) {
+                                    pixelData = updatedPixelData; // Mettre à jour les données locales
+                                    renderCanvas(pixelData); // Réafficher le canvas avec les nouvelles données
+                                }
+                            })
+                            .catch(error => {
+                                console.error(`Error during polling for canvas {{ canvas.id }}:`, error); // Log des erreurs
+                            })
+                            .finally(() => {
+                                // Recommencer le polling après une pause (2000 ms)
+                                setTimeout(pollForUpdates, 2000);
+                            });
+                    }
+
+                    // Lancer le polling pour vérifier les mises à jour des pixels
+                    pollForUpdates();
+                })();
+            </script>
+        </div>
+        <hr>
+    {% endfor %}
+</div>
+{% endblock %}

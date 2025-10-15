@@ -1,0 +1,24 @@
+{% extends "blog/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="content-section">
+        <!-- Formulaire pour créer un canvas -->
+        <form method="POST">
+            {% csrf_token %}  <!-- Protection contre les attaques CSRF -->
+            
+            <!-- Début du formulaire -->
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Create Canvas</legend>  <!-- Titre du formulaire -->
+                
+                <!-- Affichage du formulaire avec le rendu 'crispy' pour une meilleure présentation -->
+                {{ form|crispy }}
+            </fieldset>
+
+            <!-- Bouton pour soumettre le formulaire -->
+            <div class="form-group">
+                <button class="btn btn-outline-info" type="submit">Create Canvas</button>  
+            </div>       
+        </form>     
+    </div>
+{% endblock %}

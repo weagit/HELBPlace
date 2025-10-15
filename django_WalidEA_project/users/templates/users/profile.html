@@ -1,0 +1,66 @@
+{% extends "blog/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="content-section">
+    <!-- Affichage de l'image de profil et des informations de l'utilisateur -->
+    <div class="media">
+        <img class="rounded-circle account-img" src="{{ user.profile.image.url }}">
+        <div class="media-body">
+            <h2 class="account-heading">{{ user.username }}</h2>
+            {% if user != request.user %}
+                <!-- Si ce n'est pas le profil de l'utilisateur connecté -->
+                <p class="text-secondary">This is the profile of {{ user.username }}.</p>
+            {% else %}
+                <!-- Si c'est le profil de l'utilisateur connecté, afficher l'email -->
+                <p class="text-secondary">{{ user.email }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Formulaire de mise à jour du profil, uniquement pour l'utilisateur connecté -->
+    {% if user == request.user %}
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Profile Info</legend>
+            {{ u_form|crispy }}  <!-- Affichage du formulaire pour modifier les informations utilisateur -->
+            {{ p_form|crispy }}  <!-- Affichage du formulaire pour modifier l'image de profil -->
+        </fieldset>
+        <div class="form-group">
+            <button class="btn btn-outline-info" type="submit">Update</button>  <!-- Bouton pour soumettre les modifications -->
+        </div>       
+    </form>
+    {% endif %}
+
+    <!-- Section pour afficher les toiles auxquelles l'utilisateur a contribué -->
+    <div class="mt-4">
+        {% if user != request.user %}
+            <!-- Si ce n'est pas le profil de l'utilisateur connecté, afficher les contributions de cet utilisateur -->
+            <h3>Canvases {{ user.username }} has contributed to:</h3>
+        {% else %}
+            <!-- Si c'est le profil de l'utilisateur connecté, afficher ses contributions -->
+            <h3>Canvases You've Contributed To:</h3>
+        {% endif %}
+        
+        {% if canvases_with_contributions %}
+            <!-- Si l'utilisateur a contribué à des toiles, afficher les détails de chaque toile -->
+            <ul class="list-unstyled">
+                {% for canvas, contributions_count in canvases_with_contributions %}
+                    <li>
+                        <a href="{% url 'canvas-detail' pk=canvas.pk %}" class="btn btn-link">{{ canvas.title }}</a>
+                        {{ contributions_count }} pixel{{ contributions_count|pluralize }} <!-- Nombre de pixels modifiés -->
+                        {% if forloop.first %}
+                            <!-- Afficher une étiquette "Most Contributed" pour la toile la plus modifiée -->
+                            <span class="badge badge-primary">Most Contributed</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <!-- Si l'utilisateur n'a pas contribué à de toiles, afficher un message approprié -->
+            <p>This user hasn't contributed to any canvas yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

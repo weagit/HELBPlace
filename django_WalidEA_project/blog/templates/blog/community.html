@@ -1,0 +1,64 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- Titre et description du projet -->
+    <h1>Our B2 Community</h1>
+    <p>Interact with the common B2 Canvas! You can modify and visualize the canvas here.</p>
+
+    <!-- Affichage du Canvas -->
+    <canvas id="canvas" width="{{ canvas_width }}" height="{{ canvas_height }}" style="border:1px solid black;"></canvas>
+
+    <!-- Sélecteur de couleur pour l'utilisateur -->
+    <p>Select a color:</p>
+    <input type="color" id="colorPicker" value="#000000">
+
+    <script>
+        // Initialisation du canvas et de son contexte 2D
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Récupérer les données des pixels passées par la vue (canvas_data est une matrice 2D contenant les couleurs des pixels)
+        const pixelData = {{ canvas_data|safe }};  // Utilisation de la donnée sécurisée de la vue pour afficher les pixels
+
+        const scale = 10;  // Facteur d'échelle pour chaque pixel (ajustable, plus la valeur est haute, plus les pixels seront visibles)
+
+        // Affichage des pixels sur le canvas en utilisant les données
+        for (let y = 0; y < pixelData.length; y++) {
+            for (let x = 0; x < pixelData[y].length; x++) {
+                ctx.fillStyle = `#${pixelData[y][x]}`;  // Convertir la valeur hexadécimale en couleur
+                ctx.fillRect(x * scale, y * scale, scale, scale); // Dessiner chaque pixel comme un carré
+            }
+        }
+
+        // Ajouter un événement de clic sur le canvas pour changer la couleur du pixel
+        canvas.addEventListener("click", function(event) {
+            // Calculer les coordonnées du clic en pixels logiques (coordonnées du canvas, ajustées par l'échelle)
+            const rect = canvas.getBoundingClientRect();  // Obtenir la position du canvas sur la page
+            const x = Math.floor((event.clientX - rect.left) / scale);  // Coordonnée X logique du pixel
+            const y = Math.floor((event.clientY - rect.top) / scale);  // Coordonnée Y logique du pixel
+            const selectedColor = document.getElementById("colorPicker").value.substring(1);  // Récupérer la couleur sélectionnée par l'utilisateur sans le #
+
+            // URL d'API pour envoyer la modification du pixel via AJAX
+            const url = `/community/update_pixel/?row=${y}&col=${x}&hexvalue=${selectedColor}`;
+
+            // Faire une requête fetch pour envoyer les données de la modification
+            fetch(url, { method: 'GET' })
+                .then(response => response.json())  // Attendre la réponse JSON de l'API
+                .then(data => {
+                    if (data.status === "success") {
+                        alert(data.message);  // Afficher un message de succès
+                        // Mettre à jour dynamiquement le canvas sans recharger la page
+                        ctx.fillStyle = `#${selectedColor}`;
+                        ctx.fillRect(x * scale, y * scale, scale, scale);  // Remplir le pixel modifié avec la nouvelle couleur
+                    } else {
+                        alert(data.message);  // Si l'API retourne une erreur, afficher le message d'erreur
+                    }
+                })
+                .catch(error => {
+                    alert("Error updating pixel");  // Afficher une erreur si la requête échoue
+                });
+        });
+    </script>
+</div>
+{% endblock %}

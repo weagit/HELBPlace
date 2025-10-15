@@ -1,0 +1,78 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- Titre de la page : affiche le titre de la toile et des informations supplémentaires -->
+    <h1>{{ canvas.title }} - Statistics</h1>
+    <p>View the activity and contributions of this canvas.</p>
+
+    <!-- Affichage des contributions journalières -->
+    <h3>Daily Contributions</h3>
+    <!-- Canvas pour afficher les statistiques des contributions sous forme de graphique -->
+    <canvas id="daily-contributions-chart" style="height: 400px; width: 100%;"></canvas>
+    
+    <!-- Liste des contributeurs du top -->
+    <h3>Top Contributors</h3>
+    <ul>
+        {% for contributor in top_contributors %}
+            <li>
+                {% if contributor.username == request.user.username %}
+                    <!-- Si l'utilisateur est le même que celui connecté, il redirige vers son profil principal -->
+                    <a href="{% url 'profile' %}">
+                        {{ contributor.username }} - {{ contributor.contributions }} contributions (You)
+                    </a>
+                {% else %}
+                    <!-- Si l'utilisateur n'est pas connecté, afficher un lien vers le profil de cet utilisateur -->
+                    <a href="{% url 'user-profile' username=contributor.username %}">
+                        {{ contributor.username }} - {{ contributor.contributions }} contributions
+                    </a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- Inclusion de Chart.js pour afficher le graphique -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    window.onload = function() {
+        // Vérifier que les données sont valides avant de créer le graphique
+        const dates = {{ daily_contributions.dates|safe }};  // Dates des contributions
+        const counts = {{ daily_contributions.counts|safe }};  // Nombre de contributions
+
+        // Procéder uniquement si les données sont valides
+        if (Array.isArray(dates) && Array.isArray(counts) && dates.length > 0 && counts.length > 0) {
+            // Préparation des données pour le graphique des contributions journalières
+            const dailyContributionsData = {
+                labels: dates,  // Dates venant du backend
+                datasets: [{
+                    label: 'Number of Changes',  // Libellé des données
+                    data: counts,  // Nombre de modifications par jour
+                    borderColor: 'rgba(75, 192, 192, 1)',  // Couleur de la bordure
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',  // Couleur de fond
+                    borderWidth: 1  // Épaisseur de la bordure
+                }]
+            };
+
+            // Définir les options du graphique
+            const options = {
+                scales: {
+                    y: {
+                        beginAtZero: true  // Assurer que l'axe Y commence à zéro
+                    }
+                }
+            };
+
+            // Création du graphique à barres avec les données et options
+            const ctx = document.getElementById('daily-contributions-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',  // Type de graphique (barres)
+                data: dailyContributionsData,  // Données pour le graphique
+                options: options  // Options définies ci-dessus
+            });
+        } else {
+            console.error("Data for daily contributions is not properly formatted.");  // Affichage d'erreur si les données sont mal formatées
+        }
+    };
+</script>
+{% endblock %}

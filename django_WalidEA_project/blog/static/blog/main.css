@@ -1,0 +1,130 @@
+/* Style général du corps de la page */
+body {
+  background: #fafafa; /* Fond clair pour la page */
+  color: #333333; /* Texte en gris foncé */
+  margin-top: 5rem; /* Espace au-dessus du corps de la page */
+}
+
+/* Style des titres */
+h1, h2, h3, h4, h5, h6 {
+  color: #444444; /* Couleur de texte légèrement plus claire que le fond */
+}
+
+/* Réinitialisation des marges pour les listes non ordonnées */
+ul {
+  margin: 0; /* Enlève les marges par défaut des listes */
+}
+
+/* Couleur de fond spécifique */
+.bg-steel {
+  background-color: #5f788a; /* Bleu-gris pour les éléments de fond */
+}
+
+/* Style des liens de navigation du header */
+.site-header .navbar-nav .nav-link {
+  color: #cbd5db; /* Couleur des liens dans la barre de navigation */
+}
+
+/* Hover des liens dans la navigation */
+.site-header .navbar-nav .nav-link:hover {
+  color: #ffffff; /* Changement de couleur au survol */
+}
+
+/* Liens actifs dans la navigation */
+.site-header .navbar-nav .nav-link.active {
+  font-weight: 500; /* Texte en gras pour les liens actifs */
+}
+
+/* Section du contenu avec style de fond et bordure */
+.content-section {
+  background: #ffffff; /* Fond blanc pour les sections de contenu */
+  padding: 10px 20px; /* Espacement interne de la section */
+  border: 1px solid #dddddd; /* Bordure légère */
+  border-radius: 3px; /* Coins arrondis */
+  margin-bottom: 20px; /* Espacement sous chaque section */
+}
+
+/* Couleur du titre d'article */
+.article-title {
+  color: #444444; /* Couleur grise du titre */
+}
+
+/* Hover sur le titre de l'article */
+a.article-title:hover {
+  color: #428bca; /* Changement de couleur au survol */
+  text-decoration: none; /* Suppression de la décoration sous forme de soulignement */
+}
+
+/* Section de contenu de l'article */
+.article-content {
+  white-space: pre-line; /* Maintien des sauts de ligne et des espaces */
+}
+
+/* Style des images d'article */
+.article-img {
+  height: 65px; /* Hauteur de l'image */
+  width: 65px; /* Largeur de l'image */
+  margin-right: 16px; /* Espace à droite de l'image */
+}
+
+/* Métadonnées de l'article, bordure et espacement */
+.article-metadata {
+  padding-bottom: 1px; /* Espacement en bas */
+  margin-bottom: 4px; /* Espacement sous les métadonnées */
+  border-bottom: 1px solid #e3e3e3; /* Bordure légère sous les métadonnées */
+}
+
+/* Hover des liens dans les métadonnées */
+.article-metadata a:hover {
+  color: #333; /* Changement de couleur au survol */
+  text-decoration: none; /* Suppression de la décoration sous forme de soulignement */
+}
+
+/* Style des icônes SVG dans les articles */
+.article-svg {
+  width: 25px; /* Largeur de l'icône */
+  height: 25px; /* Hauteur de l'icône */
+  vertical-align: middle; /* Alignement vertical centré */
+}
+
+/* Style de l'image du profil de l'utilisateur */
+.account-img {
+  height: 125px; /* Hauteur de l'image de profil */
+  width: 125px; /* Largeur de l'image de profil */
+  margin-right: 20px; /* Espacement à droite de l'image */
+  margin-bottom: 16px; /* Espacement sous l'image */
+}
+
+/* Taille et style du titre de l'utilisateur */
+.account-heading {
+  font-size: 2.5rem; /* Taille du texte du titre du profil */
+}
+
+/* Style général pour le canvas */
+canvas {
+  border: 1px solid #000; /* Bordure noire pour délimiter le canvas */
+  display: block; /* Évite les marges indésirables */
+  margin: 20px auto; /* Centre le canvas horizontalement */
+  background-color: #ffffff; /* Fond blanc pour le canvas */
+}
+
+/* Style pour le sélecteur de couleurs */
+.color-picker input[type="color"] {
+  width: 50px; /* Largeur du sélecteur de couleur */
+  height: 50px; /* Hauteur du sélecteur de couleur */
+  border: none; /* Aucune bordure */
+  cursor: pointer; /* Changement du curseur lors du survol */
+  margin: 10px 0; /* Espacement au-dessus et en dessous */
+}
+
+/* Conteneur principal du canvas */
+.canvas-container {
+  text-align: center; /* Centre le contenu du canvas */
+  margin-top: 20px; /* Espacement au-dessus du conteneur */
+}
+
+/* Texte pour le sélecteur de couleurs */
+.color-picker h4 {
+  font-size: 16px; /* Taille du texte du titre du sélecteur */
+  margin-bottom: 5px; /* Espacement sous le titre */
+}
